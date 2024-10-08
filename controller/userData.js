@@ -1,10 +1,19 @@
 import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
+import bcrypt from 'bcryptjs';
 import { validationResult } from "express-validator";
 import userModel from "../model/userModel.js";
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 // Function to create JWT token with name, email, and hashedPassword
 const createToken = (user) => {
+  // Ensure JWT_SECRET is defined
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET is not defined");
+  }
+
   return jwt.sign(
     {
       id: user._id,
@@ -88,28 +97,31 @@ const registeredUser = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-const updatePassword=async(req,res)=>{
+
+// Controller to update user password
+const updatePassword = async (req, res) => {
   const { email, newPassword } = req.body;
 
   try {
-      // Find the user by email
-      const user = await userModel.findOne({ email });
-      if (!user) {
-          return res.status(404).json({ message: 'User not found' });
-      }
+    // Find the user by email
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
-      // Hash the new password
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-      // Update the password
-      user.password = hashedPassword;
-      await user.save();
+    // Update the password
+    user.password = hashedPassword;
+    await user.save();
 
-      res.status(200).json({ message: 'Password updated successfully' });
+    res.status(200).json({ message: 'Password updated successfully' });
   } catch (error) {
-      res.status(500).json({ error: error.message });
+    console.log(error);
+    res.status(500).json({ error: error.message });
   }
-}
+};
 
 // Export the functions
-export { createToken, loginUser, registeredUser,updatePassword };
+export { createToken, loginUser, registeredUser, updatePassword };
